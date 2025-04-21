@@ -1,0 +1,288 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduLive - Render OBS Live</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100 font-sans">
+  <header class="bg-indigo-800 text-white p-4 flex justify-between items-center">
+    <h1 class="text-2xl font-bold">EduLive</h1>
+    <div>
+      <input id="custom-username" type="text" placeholder="Choose Username" class="p-2 rounded mr-2" required>
+      <input id="password" type="password" placeholder="Password" class="p-2 rounded mr-2" required>
+      <button onclick="login()" class="bg-blue-600 text-white p-2 rounded">Login</button>
+      <span id="status" class="ml-2"></span>
+    </div>
+  </header>
+
+  <main class="container mx-auto p-6">
+    <div id="dashboard" class="hidden">
+      <h2 class="text-2xl font-bold mb-4">Welcome, <span id="user-name"></span></h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="text-lg font-semibold">Live Classes</h3>
+          <div id="live-class-container" class="mt-2 hidden w-full h-96 bg-gray-700 rounded"></div>
+          <button id="join-live" onclick="joinLive()" class="bg-green-600 text-white p-2 rounded mt-2 w-full">Join/Start Class</button>
+        </div>
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="text-lg font-semibold">Recorded Classes</h3>
+          <div id="recorded-list" class="mt-2"></div>
+          <input id="record-upload" type="file" accept="video/*" class="mt-2 hidden" onchange="uploadRecording(event)">
+          <button id="upload-record" onclick="document.getElementById('record-upload').click()" class="bg-yellow-600 text-white p-2 rounded mt-2 w-full">Upload Recording</button>
+        </div>
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="text-lg font-semibold">Tests</h3>
+          <div id="test-result" class="mt-2 hidden"></div>
+          <button id="take-test" onclick="takeTest()" class="bg-purple-600 text-white p-2 rounded mt-2 w-full">Take Test</button>
+        </div>
+      </div>
+
+      <div class="mt-6 flex">
+        <div id="chat-section" class="w-1/3 bg-white p-4 rounded shadow mr-4">
+          <h3 class="text-lg font-semibold">Chat</h3>
+          <button id="chat-icon" class="bg-blue-500 text-white p-2 rounded mt-2 w-full">💬 Chat</button>
+          <div id="chat-messages" class="mt-2 h-40 overflow-y-auto border"></div>
+          <input id="chat-input" type="text" placeholder="Type message..." class="w-full p-2 mt-2 rounded">
+          <button onclick="sendChat()" class="bg-green-500 text-white p-2 rounded mt-2">Send</button>
+        </div>
+        <div id="doubt-section" class="w-1/3 bg-white p-4 rounded shadow mr-4">
+          <h3 class="text-lg font-semibold">Doubts</h3>
+          <textarea id="doubt-input" placeholder="Enter doubt..." class="w-full p-2 mt-2 rounded h-20"></textarea>
+          <button onclick="submitDoubt()" class="bg-red-500 text-white p-2 rounded mt-2">Submit</button>
+        </div>
+        <div id="ai-chat-section" class="w-1/3 bg-white p-4 rounded shadow">
+          <h3 class="text-lg font-semibold">AI Chat (Offline)</h3>
+          <button id="ai-icon" class="bg-purple-500 text-white p-2 rounded mt-2 w-full">🤖 AI Chat</button>
+          <div id="ai-messages" class="mt-2 h-40 overflow-y-auto border"></div>
+          <input id="ai-input" type="text" placeholder="Ask AI..." class="w-full p-2 mt-2 rounded">
+          <button onclick="askAI()" class="bg-purple-500 text-white p-2 rounded mt-2">Ask</button>
+        </div>
+      </div>
+
+      <div id="subject-sections" class="mt-6">
+        <h3 class="text-lg font-semibold">Subjects</h3>
+        <select id="class-select" onchange="loadSubjects()" class="p-2 rounded mr-2">
+          <option value="">Select Class</option>
+          <option value="9">Class 9</option>
+          <option value="10">Class 10</option>
+          <option value="11">Class 11</option>
+          <option value="12">Class 12</option>
+        </select>
+        <select id="subject-select" class="p-2 rounded">
+          <option value="">Select Subject</option>
+        </select>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-indigo-800 text-white p-4 text-center mt-6">
+    <p>© 2025 EduLive. Hosted on Render.com</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
+<!-- style.css -->
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+#chat-messages, #ai-messages {
+  border: 1px solid #ccc;
+  padding: 5px;
+}
+#live-class-container {
+  transition: all 0.3s ease;
+}
+
+<!-- script.js -->
+// Static credentials
+const students = {
+  'user1': 'pass001', 'user2': 'pass002', 'user3': 'pass003', 'user4': 'pass004', 'user5': 'pass005',
+  'user6': 'pass006', 'user7': 'pass007', 'user8': 'pass008', 'user9': 'pass009', 'user10': 'pass010',
+  'user11': 'pass011', 'user12': 'pass012', 'user13': 'pass013', 'user14': 'pass014', 'user15': 'pass015',
+  'user16': 'pass016', 'user17': 'pass017', 'user18': 'pass018', 'user19': 'pass019', 'user20': 'pass020',
+  'user21': 'pass021', 'user22': 'pass022', 'user23': 'pass023', 'user24': 'pass024', 'user25': 'pass025',
+  'user26': 'pass026', 'user27': 'pass027', 'user28': 'pass028', 'user29': 'pass029', 'user30': 'pass030',
+  'user31': 'pass031', 'user32': 'pass032', 'user33': 'pass033', 'user34': 'pass034', 'user35': 'pass035',
+  'user36': 'pass036', 'user37': 'pass037', 'user38': 'pass038', 'user39': 'pass039', 'user40': 'pass040',
+  'user41': 'pass041', 'user42': 'pass042', 'user43': 'pass043', 'user44': 'pass044', 'user45': 'pass045',
+  'user46': 'pass046', 'user47': 'pass047', 'user48': 'pass048', 'user49': 'pass049', 'user50': 'pass050',
+  'user51': 'pass051', 'user52': 'pass052', 'user53': 'pass053', 'user54': 'pass054', 'user55': 'pass055',
+  'user56': 'pass056', 'user57': 'pass057', 'user58': 'pass058', 'user59': 'pass059', 'user60': 'pass060',
+  'user61': 'pass061', 'user62': 'pass062', 'user63': 'pass063', 'user64': 'pass064', 'user65': 'pass065',
+  'user66': 'pass066', 'user67': 'pass067', 'user68': 'pass068', 'user69': 'pass069', 'user70': 'pass070',
+  'user71': 'pass071', 'user72': 'pass072', 'user73': 'pass073', 'user74': 'pass074', 'user75': 'pass075',
+  'user76': 'pass076', 'user77': 'pass077', 'user78': 'pass078', 'user79': 'pass079', 'user80': 'pass080',
+  'user81': 'pass081', 'user82': 'pass082', 'user83': 'pass083', 'user84': 'pass084', 'user85': 'pass085',
+  'user86': 'pass086', 'user87': 'pass087', 'user88': 'pass088', 'user89': 'pass089', 'user90': 'pass090',
+  'user91': 'pass091', 'user92': 'pass092', 'user93': 'pass093', 'user94': 'pass094', 'user95': 'pass095',
+  'user96': 'pass096', 'user97': 'pass097', 'user98': 'pass098', 'user99': 'pass099', 'user100': 'pass100'
+};
+
+const teachers = {
+  '9_math_teacher1': 'math9pass1', '9_science_teacher1': 'sci9pass1', '9_english_teacher1': 'eng9pass1',
+  '9_hindi_teacher1': 'hin9pass1', '9_social_teacher1': 'soc9pass1',
+  '10_math_teacher1': 'math10pass1', '10_science_teacher1': 'sci10pass1', '10_english_teacher1': 'eng10pass1',
+  '10_hindi_teacher1': 'hin10pass1', '10_social_teacher1': 'soc10pass1',
+  '11_math_teacher1': 'math11pass1', '11_physics_teacher1': 'phy11pass1', '11_chemistry_teacher1': 'chem11pass1',
+  '11_biology_teacher1': 'bio11pass1', '11_english_teacher1': 'eng11pass1',
+  '12_math_teacher1': 'math12pass1', '12_physics_teacher1': 'phy12pass1', '12_chemistry_teacher1': 'chem12pass1',
+  '12_biology_teacher1': 'bio12pass1', '12_english_teacher1': 'eng12pass1'
+};
+
+let currentUser = null;
+let activeSessions = {};
+let recordedVideos = [];
+
+function login() {
+  const username = document.getElementById('custom-username').value.trim().toLowerCase();
+  const password = document.getElementById('password').value;
+  let userType = null;
+
+  if (Object.values(students).includes(password)) {
+    if (students[username] === password || Object.keys(students).includes(username)) {
+      userType = 'student';
+    }
+  } else if (Object.values(teachers).includes(password)) {
+    if (teachers[username] === password || Object.keys(teachers).includes(username)) {
+      userType = 'teacher';
+    }
+  }
+
+  if (userType) {
+    if (userType === 'student' && activeSessions[username]) {
+      document.getElementById('status').textContent = 'Another session active!';
+      return;
+    }
+    currentUser = { name: username, type: userType };
+    document.getElementById('user-name').textContent = username;
+    document.getElementById('dashboard').classList.remove('hidden');
+    document.getElementById('status').textContent = 'Logged in';
+    if (userType === 'student') activeSessions[username] = true;
+  } else {
+    document.getElementById('status').textContent = 'Invalid credentials!';
+  }
+}
+
+function loadSubjects() {
+  const classId = document.getElementById('class-select').value;
+  const subjectSelect = document.getElementById('subject-select');
+  subjectSelect.innerHTML = '<option value="">Select Subject</option>';
+  const subjects = {
+    '9': ['Math', 'Science', 'English', 'Hindi', 'Social'],
+    '10': ['Math', 'Science', 'English', 'Hindi', 'Social'],
+    '11': ['Math', 'Physics', 'Chemistry', 'Biology', 'English'],
+    '12': ['Math', 'Physics', 'Chemistry', 'Biology', 'English']
+  };
+  if (subjects[classId]) {
+    subjects[classId].forEach(subject => {
+      subjectSelect.innerHTML += `<option value="${subject.toLowerCase()}">${subject}</option>`;
+    });
+  }
+}
+
+// Render.com + OBS Integration (Simulated)
+function joinLive() {
+  const container = document.getElementById('live-class-container');
+  if (container) {
+    container.classList.remove('hidden');
+    container.innerHTML = '<p>Starting live class... (Teacher to use OBS to stream here)</p>';
+    if (currentUser.type === 'teacher') {
+      alert('Open OBS Studio on your system. Set RTMP URL to your Render server (e.g., rtmp://your-render-app/live) and use a stream key. Start streaming from OBS to display here.');
+      // Note: Actual stream will require Render server setup with Nginx or similar for RTMP
+    } else {
+      container.innerHTML = '<video id="live-stream" width="100%" height="100%" controls autoplay></video>';
+      // Placeholder: Replace with actual RTMP player (e.g., Video.js) once Render server is set
+      setTimeout(() => {
+        container.innerHTML = '<p>Waiting for teacher to start stream via OBS...</p>';
+      }, 5000);
+    }
+  }
+}
+
+function uploadRecording(event) {
+  const file = event.target.files[0];
+  if (file && currentUser.type === 'teacher') {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const videoUrl = e.target.result;
+      recordedVideos.push({ title: `${currentUser.name}_${file.name}`, url: videoUrl });
+      updateRecordings();
+    };
+    reader.readAsDataURL(file);
+    document.getElementById('record-upload').value = '';
+  }
+}
+
+function updateRecordings() {
+  const list = document.getElementById('recorded-list');
+  list.innerHTML = recordedVideos.map(v => `<a href="${v.url}" target="_blank">${v.title}</a><br>`).join('');
+}
+
+function takeTest() {
+  const score = Math.floor(Math.random() * 100);
+  const result = document.getElementById('test-result');
+  result.innerHTML = `Score: ${score}%`;
+  result.classList.remove('hidden');
+  if (score >= 80) {
+    leaderboard.push({ name: currentUser.name, score: score });
+    leaderboard.sort((a, b) => b.score - a.score);
+    updateLeaderboard();
+  }
+}
+
+let leaderboard = [];
+function updateLeaderboard() {
+  const top10 = leaderboard.slice(0, 10);
+  console.log('Top 10:', top10.map(l => `${l.name}: ${l.score}`).join(', '));
+}
+
+function sendChat() {
+  const message = document.getElementById('chat-input').value;
+  if (message && currentUser) {
+    const messages = document.getElementById('chat-messages');
+    messages.innerHTML += `<p><strong>${currentUser.name}</strong>: ${message} <small>${new Date().toLocaleTimeString()}</small></p>`;
+    document.getElementById('chat-input').value = '';
+    messages.scrollTop = messages.scrollHeight;
+  }
+}
+
+function submitDoubt() {
+  const doubt = document.getElementById('doubt-input').value;
+  if (doubt && currentUser) {
+    const messages = document.getElementById('chat-messages');
+    messages.innerHTML += `<p><strong>${currentUser.name}</strong> (Doubt): ${doubt} <small>${new Date().toLocaleTimeString()}</small></p>`;
+    document.getElementById('doubt-input').value = '';
+    messages.scrollTop = messages.scrollHeight;
+    alert('Doubt submitted to teacher!');
+  }
+}
+
+function askAI() {
+  const question = document.getElementById('ai-input').value;
+  if (question) {
+    const responses = {
+      'what is math': 'Math is the study of numbers and patterns, bro!',
+      'what is science': 'Science is all about experiments and discoveries, bhai!',
+      'default': 'Sorry, AI offline—ask something simple!'
+    };
+    const answer = responses[question.toLowerCase()] || responses['default'];
+    const messages = document.getElementById('ai-messages');
+    messages.innerHTML += `<p><strong>AI</strong>: ${answer} <small>${new Date().toLocaleTimeString()}</small></p>`;
+    document.getElementById('ai-input').value = '';
+    messages.scrollTop = messages.scrollHeight;
+  }
+}
+
+// Session cleanup
+window.onbeforeunload = function() {
+  if (currentUser && currentUser.type === 'student') {
+    delete activeSessions[currentUser.name.toLowerCase()];
+  }
+};
